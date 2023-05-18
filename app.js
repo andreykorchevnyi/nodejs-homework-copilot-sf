@@ -1,10 +1,11 @@
 const express = require('express');
 const axios = require('axios');
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Маршрут для обработки запросов от Salesforce Canvas приложения
 app.post('/canvas', async (req, res) => {
+    console.log(req);
     try {
         // Получение oauthToken и refreshToken из тела запроса
         const { oauthToken } = req.body;
