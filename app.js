@@ -1,25 +1,49 @@
-const express = require('express')
-const logger = require('morgan')
-const cors = require('cors')
+const express = require('express');
+const axios = require('axios');
+const app = express();
+const PORT = 3001;
 
-const contactsRouter = require('./routes/api/contacts')
+// Маршрут для обработки запросов от Salesforce Canvas приложения
+app.post('/canvas', async (req, res) => {
+    try {
+        // Получение oauthToken и refreshToken из тела запроса
+        const { oauthToken, refreshToken } = req.body;
 
-const app = express()
+        // Запрос к Salesforce REST API для получения информации о пользователе
+        const userInfoResponse = await axios.get(
+            'https://login.salesforce.com/services/oauth2/userinfo',
+            {
+                headers: {
+                    Authorization: `Bearer ${oauthToken}`,
+                },
+            }
+        );
 
-const formatsLogger = app.get('env') === 'development' ? 'dev' : 'short'
+        // Извлечение нужной информации о пользователе
+        const { user_id, organization_id, name, picture, email } =
+            userInfoResponse.data;
 
-app.use(logger(formatsLogger))
-app.use(cors())
-app.use(express.json())
+        // Верификация полученных данных (в данном случае просто проверка наличия id пользователя)
+        if (!user_id) {
+            throw new Error('Invalid user data');
+        }
 
-app.use('/api/contacts', contactsRouter)
+        // Отправка верифицированных данных обратно клиенту
+        res.json({
+            id: user_id,
+            organization_id,
+            name,
+            avatar: picture,
+            email,
+        });
+    } catch (error) {
+        // Обработка ошибок
+        console.error('Error:', error.message);
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
 
-app.use((req, res) => {
-  res.status(404).json({ message: 'Not found' })
-})
-
-app.use((err, req, res, next) => {
-  res.status(500).json({ message: err.message })
-})
-
-module.exports = app
+// Запуск сервера
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
