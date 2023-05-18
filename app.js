@@ -7,7 +7,7 @@ const PORT = 3001;
 app.post('/canvas', async (req, res) => {
     try {
         // Получение oauthToken и refreshToken из тела запроса
-        const { oauthToken, refreshToken } = req.body;
+        const { oauthToken } = req.body;
 
         // Запрос к Salesforce REST API для получения информации о пользователе
         const userInfoResponse = await axios.get(
@@ -20,18 +20,18 @@ app.post('/canvas', async (req, res) => {
         );
 
         // Извлечение нужной информации о пользователе
-        const { user_id, organization_id, name, picture, email } =
+        const { userId, organizationId, name, picture, email } =
             userInfoResponse.data;
 
         // Верификация полученных данных (в данном случае просто проверка наличия id пользователя)
-        if (!user_id) {
+        if (!userId) {
             throw new Error('Invalid user data');
         }
 
         // Отправка верифицированных данных обратно клиенту
         res.json({
-            id: user_id,
-            organization_id,
+            id: userId,
+            organizationId,
             name,
             avatar: picture,
             email,
